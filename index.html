@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ Звездная Игра</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary: #6C5CE7;
+            --secondary: #A29BFE;
+            --accent: #FDCB6E;
+            --bg: #0F0F1A;
+            --card: #1A1A2E;
+            --text: #FFFFFF;
+            --text-muted: #A0A0B0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .stats-card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border: 2px solid var(--primary);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .menu-btn {
+            background: var(--card);
+            border: 2px solid var(--secondary);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .menu-btn-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .menu-btn-text {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .section {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gift-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .gift-emoji {
+            font-size: 32px;
+            margin-right: 15px;
+        }
+
+        .gift-info {
+            flex: 1;
+        }
+
+        .gift-name {
+            font-weight: 600;
+        }
+
+        .gift-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .gift-price {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-rank {
+            font-size: 20px;
+            font-weight: 700;
+            width: 40px;
+        }
+
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .leaderboard-stars {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .task-status {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 16px;
+        }
+
+        .task-status.completed {
+            background: #00D26A;
+        }
+
+        .task-status.pending {
+            background: var(--secondary);
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-weight: 600;
+        }
+
+        .task-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .task-reward {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            border-top: 2px solid var(--primary);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+        }
+
+        .nav-btn-icon {
+            font-size: 24px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--secondary);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .streak-fire {
+            color: #FF6B6B;
+            animation: flicker 0.5s infinite alternate;
+        }
+
+        @keyframes flicker {
+            from { opacity: 1; }
+            to { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">⭐</div>
+            <h1>Звездная Игра</h1>
+            <p class="subtitle">Зарабатывай звезды и дари подарки!</p>
+        </header>
+
+        <div class="stats-card">
+            <div class="stat">
+                <div class="stat-value" id="stars-count">0</div>
+                <div class="stat-label">Звезд</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="level-count">1</div>
+                <div class="stat-label">Уровень</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="streak-count">0</div>
+                <div class="stat-label">Серия</div>
+            </div>
+        </div>
+
+        <div class="menu-grid">
+            <div class="menu-btn" onclick="showTab('gifts')">
+                <div class="menu-btn-icon">🎁</div>
+                <div class="menu-btn-text">Магазин</div>
+            </div>
+            <div class="menu-btn" onclick="showTab('leaderboard')">
+                <div class="menu-btn-icon">🏆</div>
+                <div class="menu-btn-text">Топ</div>
+            </div>
+            <div class="menu-btn" onclick="showTab('tasks')">
+                <div class="menu-btn-icon">📋</div>
+                <div class="menu-btn-text">Задания</div>
+            </div>
+            <div class="menu-btn" onclick="showTab('inventory')">
+                <div class="menu-btn-icon">🎒</div>
+                <div class="menu-btn-text">Инвентарь</div>
+            </div>
+        </div>
+
+        <div id="gifts" class="tab-content">
+            <div class="section">
+                <div class="section-title">🎁 Магазин подарков</div>
+                <div id="gifts-list"></div>
+            </div>
+        </div>
+
+        <div id="leaderboard" class="tab-content">
+            <div class="section">
+                <div class="section-title">🏆 Лидерборд</div>
+                <div id="leaderboard-list"></div>
+            </div>
+        </div>
+
+        <div id="tasks" class="tab-content">
+            <div class="section">
+                <div class="section-title">📋 Задания</div>
+                <div id="tasks-list"></div>
+            </div>
+        </div>
+
+        <div id="inventory" class="tab-content">
+            <div class="section">
+                <div class="section-title">🎒 Твой инвентарь</div>
+                <div id="inventory-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="showTab('gifts')">
+            <span class="nav-btn-icon">🎁</span>
+            <span>Магазин</span>
+        </button>
+        <button class="nav-btn" onclick="showTab('leaderboard')">
+            <span class="nav-btn-icon">🏆</span>
+            <span>Топ</span>
+        </button>
+        <button class="nav-btn" onclick="showTab('tasks')">
+            <span class="nav-btn-icon">📋</span>
+            <span>Задания</span>
+        </button>
+        <button class="nav-btn" onclick="showTab('inventory')">
+            <span class="nav-btn-icon">🎒</span>
+            <span>Инвентарь</span>
+        </button>
+    </nav>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let userData = null;
+        let giftsData = null;
+        let leaderboardData = null;
+        let tasksData = null;
+        let inventoryData = null;
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(tabName === 'gifts' ? 'магазин' : tabName === 'leaderboard' ? 'топ' : tabName === 'tasks' ? 'задания' : 'инвентарь')) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        async function loadData() {
+            userData = await tg.initDataUnsafe();
+            
+            document.getElementById('stars-count').textContent = userData?.stars || 0;
+            document.getElementById('level-count').textContent = userData?.level || 1;
+            document.getElementById('streak-count').textContent = userData?.daily_streak || 0;
+
+            loadGifts();
+            loadLeaderboard();
+            loadTasks();
+            loadInventory();
+        }
+
+        async function loadGifts() {
+            const gifts = [
+                {id: 1, name: 'Звезда', emoji: '⭐', price: 10, description: 'Сияющая звезда'},
+                {id: 2, name: 'Сердце', emoji: '❤️', price: 25, description: 'Сердце любви'},
+                {id: 3, name: 'Роза', emoji: '🌹', price: 50, description: 'Красивая роза'},
+                {id: 4, name: 'Бриллиант', emoji: '💎', price: 100, description: 'Блестящий бриллиант'},
+                {id: 5, name: 'Корона', emoji: '👑', price: 250, description: 'Корона короля'},
+                {id: 6, name: 'Ракета', emoji: '🚀', price: 500, description: 'Полет в космос'},
+                {id: 7, name: 'Трофей', emoji: '🏆', price: 1000, description: 'Победный трофей'},
+                {id: 8, name: 'НЛО', emoji: '🛸', price: 2500, description: 'Пришелец из космоса'}
+            ];
+
+            const list = document.getElementById('gifts-list');
+            list.innerHTML = gifts.map(gift => `
+                <div class="gift-item">
+                    <div class="gift-emoji">${gift.emoji}</div>
+                    <div class="gift-info">
+                        <div class="gift-name">${gift.name}</div>
+                        <div class="gift-desc">${gift.description}</div>
+                    </div>
+                    <div class="gift-price">${gift.price} ⭐</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadLeaderboard() {
+            const leaderboard = [
+                {name: 'Player1', stars: 1500},
+                {name: 'Player2', stars: 1200},
+                {name: 'Player3', stars: 900},
+                {name: 'Player4', stars: 750},
+                {name: 'Player5', stars: 500}
+            ];
+
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = leaderboard.map((player, i) => `
+                <div class="leaderboard-item">
+                    <div class="leaderboard-rank">${['🥇','🥈','🥉','4.','5.'][i]}</div>
+                    <div class="leaderboard-name">${player.name}</div>
+                    <div class="leaderboard-stars">⭐${player.stars}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadTasks() {
+            const tasks = [
+                {name: 'Добро пожаловать', description: 'Начни играть', reward: 50, completed: true},
+                {name: 'Ежедневный вход', description: 'Заходи каждый день', reward: 10, completed: false},
+                {name: 'Первый подарок', description: 'Отправь первый подарок', reward: 25, completed: false},
+                {name: 'Коллекционер', description: 'Собери 5 разных подарков', reward: 75, completed: false},
+                {name: 'Щедрый игрок', description: 'Отправь 10 подарков', reward: 100, completed: false}
+            ];
+
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = tasks.map(task => `
+                <div class="task-item">
+                    <div class="task-status ${task.completed ? 'completed' : 'pending'}">
+                        ${task.completed ? '✓' : '○'}
+                    </div>
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-desc">${task.description}</div>
+                    </div>
+                    <div class="task-reward">+${task.reward}⭐</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadInventory() {
+            const inventory = [
+                {name: 'Звезда', emoji: '⭐', quantity: 5},
+                {name: 'Сердце', emoji: '❤️', quantity: 2}
+            ];
+
+            const list = document.getElementById('inventory-list');
+            if (inventory.length === 0) {
+                list.innerHTML = '<div class="empty-state">У тебя пока нет подарков</div>';
+            } else {
+                list.innerHTML = inventory.map(item => `
+                    <div class="gift-item">
+                        <div class="gift-emoji">${item.emoji}</div>
+                        <div class="gift-info">
+                            <div class="gift-name">${item.name}</div>
+                        </div>
+                        <div class="gift-price">x${item.quantity}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        tg.ready();
+        loadData();
+    </script>
+</body>
+</html>
