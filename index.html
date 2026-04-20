@@ -25,6 +25,8 @@
             --text: #FFFFFF;
             --text-muted: rgba(255,255,255,0.6);
             --glow: 0 0 30px rgba(255,107,53,0.5);
+            --danger: #ff4757;
+            --success: #2ed573;
         }
 
         html, body {
@@ -309,6 +311,11 @@
             transform: scale(0.95);
         }
 
+        .gift-card.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(46, 213, 115, 0.5);
+        }
+
         .gift-emoji {
             font-size: 36px;
             margin-bottom: 8px;
@@ -392,6 +399,7 @@
             border-radius: 12px;
             margin-bottom: 8px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .task-card:hover {
@@ -451,6 +459,7 @@
             padding: 12px;
             text-align: center;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .inventory-item:hover {
@@ -465,6 +474,27 @@
             font-size: 12px;
             font-weight: 700;
             color: var(--secondary);
+        }
+
+        .inventory-send-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--success), #27ae60);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(46, 213, 115, 0.4);
+        }
+
+        .inventory-send-btn.visible {
+            display: block;
         }
 
         .bottom-nav {
@@ -575,6 +605,42 @@
         .action-btn:active {
             transform: scale(0.98);
         }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success {
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .toast.error {
+            border: 2px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .daily-btn {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
     </style>
 </head>
 <body>
@@ -587,6 +653,8 @@
             <div class="loading-bar"></div>
         </div>
     </div>
+
+    <div class="toast" id="toast"></div>
 
     <div class="app-container">
         <div class="profile-card">
@@ -618,6 +686,10 @@
                 <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
             </div>
             <div class="xp-text"><span id="xp-value">0</span> / <span id="xp-needed">100</span> XP</div>
+            
+            <button class="action-btn daily-btn" onclick="claimDaily()">
+                🎁 Получить ежедневный бонус
+            </button>
         </div>
 
         <div class="section-card">
@@ -626,7 +698,6 @@
                 Магазин
             </div>
             <div class="gift-grid" id="gifts-grid"></div>
-            <button class="action-btn" onclick="buyGift()">Купить подарок</button>
         </div>
 
         <div id="leaderboard" class="tab-content">
@@ -656,6 +727,9 @@
                     Инвентарь
                 </div>
                 <div class="inventory-grid" id="inventory-list"></div>
+                <button class="inventory-send-btn" id="send-gift-btn" onclick="sendGiftPrompt()">
+                    ✉️ Отправить подарок
+                </button>
             </div>
         </div>
     </div>
@@ -685,9 +759,27 @@
         tg.expand();
         tg.ready();
 
+        const user = tg.initDataUnsafe?.user;
+        const userId = user?.id || 0;
+        const userName = user?.first_name || 'Player';
+        
         let scene, camera, renderer, stars = [];
-        let userData = { stars: 0, level: 1, xp: 0, daily_streak: 0, gifts_count: 0, name: 'Player' };
+        let userData = { stars: 0, level: 1, xp: 0, daily_streak: 0, gifts_sent: 0, gifts_received: 0, name: userName };
+        let selectedGift = null;
+        let selectedInventoryItem = null;
         let currentTab = 'shop';
+
+        // Gifts data (will be updated from API if available)
+        let giftsData = [
+            {id: 1, name: 'Звезда', emoji: '⭐', price: 10, rarity: 'common'},
+            {id: 2, name: 'Сердце', emoji: '❤️', price: 25, rarity: 'common'},
+            {id: 3, name: 'Роза', emoji: '🌹', price: 50, rarity: 'uncommon'},
+            {id: 4, name: 'Бриллиант', emoji: '💎', price: 100, rarity: 'rare'},
+            {id: 5, name: 'Корона', emoji: '👑', price: 250, rarity: 'epic'},
+            {id: 6, name: 'Ракета', emoji: '🚀', price: 500, rarity: 'legendary'},
+            {id: 7, name: 'Трофей', emoji: '🏆', price: 1000, rarity: 'mythic'},
+            {id: 8, name: 'НЛО', emoji: '🛸', price: 2500, rarity: 'ultimate'}
+        ];
 
         function init3D() {
             scene = new THREE.Scene();
@@ -752,6 +844,8 @@
                     btn.classList.add('active');
                 }
             });
+            
+            tg.HapticFeedback.selectionChanged();
         }
 
         function updateUI() {
@@ -760,7 +854,7 @@
             document.getElementById('stars-count').textContent = userData.stars;
             document.getElementById('streak-count').innerHTML = userData.daily_streak > 0 ? 
                 userData.daily_streak + ' <span class="streak-fire">🔥</span>' : '0';
-            document.getElementById('gifts-count').textContent = userData.gifts_count;
+            document.getElementById('gifts-count').textContent = userData.gifts_sent;
             
             const xpNeeded = userData.level * 100;
             const xpPercent = (userData.xp / xpNeeded) * 100;
@@ -769,19 +863,17 @@
             document.getElementById('xp-needed').textContent = xpNeeded;
         }
 
-        function loadGifts() {
-            const gifts = [
-                {id: 1, name: 'Звезда', emoji: '⭐', price: 10, rarity: 'common'},
-                {id: 2, name: 'Сердце', emoji: '❤️', price: 25, rarity: 'common'},
-                {id: 3, name: 'Роза', emoji: '🌹', price: 50, rarity: 'uncommon'},
-                {id: 4, name: 'Бриллиант', emoji: '💎', price: 100, rarity: 'rare'},
-                {id: 5, name: 'Корона', emoji: '👑', price: 250, rarity: 'epic'},
-                {id: 6, name: 'Ракета', emoji: '🚀', price: 500, rarity: 'legendary'},
-                {id: 7, name: 'Трофей', emoji: '🏆', price: 1000, rarity: 'mythic'},
-                {id: 8, name: 'НЛО', emoji: '🛸', price: 2500, rarity: 'ultimate'}
-            ];
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
 
-            document.getElementById('gifts-grid').innerHTML = gifts.map(gift => `
+        function loadGifts() {
+            document.getElementById('gifts-grid').innerHTML = giftsData.map(gift => `
                 <div class="gift-card" onclick="selectGift(${gift.id})">
                     <div class="gift-emoji">${gift.emoji}</div>
                     <div class="gift-name">${gift.name}</div>
@@ -791,13 +883,51 @@
             `).join('');
         }
 
+        function selectGift(giftId) {
+            selectedGift = giftsData.find(g => g.id === giftId);
+            if (!selectedGift) return;
+            
+            document.querySelectorAll('.gift-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            tg.HapticFeedback.impactOccurred('medium');
+            
+            if (userData.stars >= selectedGift.price) {
+                buyGift(selectedGift);
+            } else {
+                showToast(`Нужно ${selectedGift.price} ⭐, у тебя ${userData.stars} ⭐`, 'error');
+            }
+        }
+
+        function buyGift(gift) {
+            if (userData.stars < gift.price) {
+                showToast('Недостаточно звезд!', 'error');
+                return;
+            }
+            
+            userData.stars -= gift.price;
+            updateUI();
+            
+            // Send data to bot
+            tg.sendData(JSON.stringify({
+                action: 'buy_gift',
+                gift_id: gift.id,
+                user_id: userId
+            }));
+            
+            showToast(`Купил ${gift.emoji} ${gift.name}!`, 'success');
+            tg.HapticFeedback.notificationOccurred('success');
+            
+            loadInventory();
+        }
+
         function loadLeaderboard() {
             const players = [
-                {name: 'Player1', stars: 1500},
-                {name: 'Player2', stars: 1200},
-                {name: 'Player3', stars: 900},
-                {name: 'Player4', stars: 750},
-                {name: 'Player5', stars: 500}
+                {first_name: 'Player1', stars: 1500},
+                {first_name: 'Player2', stars: 1200},
+                {first_name: 'Player3', stars: 900},
+                {first_name: 'Player4', stars: 750},
+                {first_name: 'Player5', stars: 500}
             ];
 
             document.getElementById('leaderboard-list').innerHTML = players.map((p, i) => `
@@ -805,7 +935,7 @@
                     <div class="leaderboard-rank ${['gold','silver','bronze'][i]}">
                         ${['🥇','🥈','🥉'][i] || (i+1)+'.'}
                     </div>
-                    <div class="leaderboard-name">${p.name}</div>
+                    <div class="leaderboard-name">${p.first_name}</div>
                     <div class="leaderboard-stars">⭐ ${p.stars}</div>
                 </div>
             `).join('');
@@ -821,7 +951,7 @@
             ];
 
             document.getElementById('tasks-list').innerHTML = tasks.map(t => `
-                <div class="task-card">
+                <div class="task-card" onclick="doTask('${t.name.toLowerCase().replace(/ /g, '_')}')">
                     <div class="task-checkbox ${t.done ? 'completed' : 'pending'}">
                         ${t.done ? '✓' : '○'}
                     </div>
@@ -834,10 +964,21 @@
             `).join('');
         }
 
+        function doTask(taskType) {
+            tg.sendData(JSON.stringify({
+                action: 'complete_task',
+                task_type: taskType,
+                user_id: userId
+            }));
+            
+            showToast('Задание выполнено!', 'success');
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
         function loadInventory() {
             const items = [
-                {emoji: '⭐', qty: 5},
-                {emoji: '❤️', qty: 2}
+                {name: 'Звезда', emoji: '⭐', quantity: 5},
+                {name: 'Сердце', emoji: '❤️', quantity: 2}
             ];
 
             if (items.length === 0) {
@@ -847,23 +988,50 @@
                         <p>У тебя пока нет подарков</p>
                     </div>
                 `;
+                document.getElementById('send-gift-btn').classList.remove('visible');
             } else {
                 document.getElementById('inventory-list').innerHTML = items.map(item => `
-                    <div class="inventory-item">
+                    <div class="inventory-item" onclick="selectInventoryItem('${item.name}')">
                         <div class="inventory-emoji">${item.emoji}</div>
-                        <div class="inventory-qty">x${item.qty}</div>
+                        <div class="inventory-qty">x${item.quantity}</div>
                     </div>
                 `).join('');
+                document.getElementById('send-gift-btn').classList.add('visible');
             }
         }
 
-        function selectGift(id) {
+        function selectInventoryItem(itemName) {
+            selectedInventoryItem = itemName;
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function buyGift() {
-            tg.HapticFeedback.impactOccurred('heavy');
-            tg.showAlert('Выбери подарок из магазина!');
+        function sendGiftPrompt() {
+            tg.showPrompt('Введи имя игрока кому хочешь отправить подарок:', (username) => {
+                if (username) {
+                    tg.sendData(JSON.stringify({
+                        action: 'send_gift',
+                        to_username: username,
+                        gift: selectedInventoryItem,
+                        user_id: userId
+                    }));
+                    showToast(`Подарок ${selectedInventoryItem} отправлен игроку ${username}!`, 'success');
+                }
+            });
+        }
+
+        function claimDaily() {
+            const bonus = Math.min(10 * (userData.daily_streak + 1), 100);
+            userData.stars += bonus;
+            userData.daily_streak += 1;
+            updateUI();
+            
+            tg.sendData(JSON.stringify({
+                action: 'daily_bonus',
+                user_id: userId
+            }));
+            
+            showToast(`+${bonus} ⭐! Серия: ${userData.daily_streak} дней`, 'success');
+            tg.HapticFeedback.notificationOccurred('success');
         }
 
         window.addEventListener('resize', () => {
